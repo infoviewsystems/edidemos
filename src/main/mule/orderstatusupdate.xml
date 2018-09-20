@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:edidemo-mock-response-api="http://www.mulesoft.org/schema/mule/edidemo-mock-response-api"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:as400="http://www.mulesoft.org/schema/mule/as400"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/as400 http://www.mulesoft.org/schema/mule/as400/current/mule-as400.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/edidemo-mock-response-api http://www.mulesoft.org/schema/mule/edidemo-mock-response-api/current/mule-edidemo-mock-response-api.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	<http:request-config name="HTTP_Request_configuration"
+		doc:name="HTTP Request configuration" doc:id="10fbcdea-f487-43de-8742-549cc02cfeba"
+		basePath="/api">
+		<http:request-connection host="edi-as400-demo-response.us-e1.cloudhub.io">
+		</http:request-connection>
+	</http:request-config>
+	<edidemo-mock-response-api:config
+		name="EDI_Demo_Mock_Response_API_Config" doc:name="EDI Demo Mock Response API Config"
+		doc:id="49dfc42f-7f99-41bc-92d0-180a8d420371" />
+	<flow name="orderstatusupdateFlow" doc:id="2623761a-9ea5-4514-a9f0-4661027ee0eb">
+		<as400:read-data-queue doc:name="Read data queue"
+			doc:id="30e235df-8ff9-4af6-ae75-d12799b391bf" config-ref="AS400_Config"
+			dtaq="edidemoreq" library="edidemos" dtaqKey="' '" dtaqKeySearchType="GREATER_THAN_OR_EQUAL"
+			numberOfConsumers="2" />
+		<as400:write-data-queue doc:name="Write AS400 response"
+			doc:id="61f23dce-2049-4259-9e84-122c5f840259" config-ref="AS400_Config"
+			dtaq="edidemores" library="edidemos" dtaqKey="#[attributes.key]">
+			<as400:dq-entry><![CDATA[#['Status=OK ']]]></as400:dq-entry>
+		</as400:write-data-queue>
+		<logger level="INFO" doc:name="Transaction Received"
+			doc:id="3a947c40-586c-49d5-8673-452386f6f904"
+			message="Transaction: #[attributes.key] START: Received changes to order:  #[payload]" />
+		<set-variable value="#[attributes.key]" doc:name="Save Trans ID"
+			doc:id="c8dcbf51-344e-4b9b-987a-eabcc2bc1b7b" variableName="correlationID" />
+		<ee:transform doc:name="Transform Message"
+			doc:id="ef729f8c-c343-4644-8ef9-28114b450dc4">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var splittedValue=payload splitBy ","
+---
+{
+	"messageHeader" : {
+		"operation": splittedValue[0],
+		"orderID": splittedValue[1] as Number,
+		"referenceOrderID": splittedValue[2],
+		"oldOrderStatus": splittedValue[3],
+		"newOrderStatus": splittedValue[4],
+		"correlationId" : "1",
+		"transactionCount": "1"
+	},
+	"orderHeader": {
+		"id": splittedValue[1] as Number,
+		"environment": "localhost",
+		"orderNumber": "splittedValue[2]",
+		"totalPrice": 0.00,
+		"orderDate": "2018-03-09T00:00:00-08:00"
+	},
+	"items": [{
+		"quantity": 1,
+		"shippingDate": "2015-03-09T00:00:00-08:00",
+		"name": "Lego",
+		"code": "50260-800",
+		"unitCost": 1.2,
+		"cost": 2.3,
+		"accepted": true
+	}]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="e57ceb0c-582b-4f36-93a5-8b155db11c80" message="#[payload]"/>
+		<http:request method="POST" doc:name="Request"
+			doc:id="187693b0-92c6-4cad-9736-dc2edfa941a2" config-ref="HTTP_Request_configuration"
+			path='#["/orders/" ++ payload.orderHeader.id]' target="callOutput" outputMimeType="application/json">
+			<http:headers><![CDATA[#[output applicaton/java
+---
+{
+	"Content-Type" : "application/json"
+}]]]></http:headers>
+		</http:request>
+		<logger level="INFO" doc:name="Log the transaction"
+			doc:id="9e8dfe95-7c04-48d5-b833-53c12fc21900"
+			message='#["Transaction " ++ vars.correlationID ++ " completed!"] ' />
+	</flow>
+</mule>

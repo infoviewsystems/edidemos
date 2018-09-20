@@ -1,0 +1,25 @@
+#%RAML 1.0
+title: EDI AS400 Order Entry and Status update Example
+version: 1.0
+
+traits:
+  client-id-required:
+    queryParameters:
+      client_id:
+        type: string
+      client_secret:
+        type: string
+
+/orders:
+  post:
+    is: [client-id-required]
+    description: Create new order(s) on AS400
+    body:
+      application/json: 
+        example: !include examples/orderRequest.json 
+    responses:
+      200:
+        body:
+          application/json: 
+            example: !include examples/orderResponse.json
+    

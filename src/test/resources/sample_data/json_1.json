@@ -1,0 +1,68 @@
+{
+  "ORDERS-HEADER": {
+    "ControlRef": "37369",
+    "MessageType": "ORDERS",
+    "SenderID": "GM",
+    "SenderQual": "ZZ",
+    "SenderGroup": "BIGRETAIL",
+    "InternalCustId": "ULTRARET",
+    "ReceiverID": "KEMET",
+    "ReceiverQual": "ZZ",
+    "InternalRouting": "KEMET1"
+  },
+  "PurchaseOrder": {
+    "POType": "PO",
+    "PONumber": "4LF4Y6DB",
+    "PODate": "2016-07-06T00:00:00-04:00",
+    "POREF": "801101X",
+    "POCOMPANY": "SUPERRET",
+    "POQUAL": "15",
+    "Items": [
+      {
+        "LineItem": "1",
+        "LineAction": "a",
+        "ProductID": "9781138930230",
+        "Price": 56.21,
+        "Quantity": 7,
+        "Category": "EN",
+        "Division": "DA"
+      },
+      {
+        "LineItem": "2",
+        "LineAction": "a",
+        "ProductID": "9781138781818",
+        "Price": 36.15,
+        "Quantity": 9,
+        "Category": "EN",
+        "Division": "DB"
+      },
+      {
+        "LineItem": "3",
+        "LineAction": "a",
+        "ProductID": "9781138679337",
+        "Price": 37.46,
+        "Quantity": 5,
+        "Category": "EN",
+        "Division": "DA"
+      },
+      {
+        "LineItem": "4",
+        "LineAction": "a",
+        "ProductID": "9781138650053",
+        "Price": 71.25,
+        "Quantity": 1,
+        "Category": "EN",
+        "Division": "DA"
+      },
+      {
+        "LineItem": "5",
+        "LineAction": "a",
+        "ProductID": "9781138650039",
+        "Price": 71.22,
+        "Quantity": 3,
+        "Category": "EN",
+        "Division": "DB"
+      }
+    ]
+  }
+}
